@@ -1,26 +1,32 @@
-const express = require("express");
-const path = require("path");
-const app = express();
-
-// cập nhật file env
 require("dotenv").config();
-
+const express = require("express");
+const configViewEngine = require("./src/config/viewEngine");
+const WebRoutes = require("./src/routes/web");
+const connectToDatabase = require("./src/config/database");
+const app = express();
 const port = process.env.PORT || 8080;
 
-// config template enginees
-app.set("views", path.join(__dirname, "./src/views"));
-app.set("view engine", "ejs");
+// config data form
 
-// config files  public
-app.use(express.static(path.join(__dirname, "./src/public")));
+app.use(express.json()); // for json
+app.use(express.urlencoded({ extended: true }));
+// Config view engine and routes
+configViewEngine(app);
+app.use("/", WebRoutes);
 
-app.get("/", (req, res) => {
-  res.send("Hello World\n duy anh dep trai 134");
+// Create the connection to database and execute query
+const initializeDatabase = async () => {
+  try {
+    const connection = await connectToDatabase();
+    const [results, fields] = await connection.query("SELECT * FROM `Users`");
+  } catch (err) {
+    console.error("Error during database initialization:", err);
+  }
+};
+
+// Call the function to connect to the database
+initializeDatabase();
+
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
-app.get("/abc", (req, res) => {
-  res.send("check abc");
-});
-app.get("/hoidanit", (req, res) => {
-  res.render("sample.ejs");
-});
-app.listen(port);
